@@ -147,15 +147,25 @@ func (e *clusterExternal) Create(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalCreation{}, nil
 	}
 
+	// Enable Autopilot (this should be propagated to the gke type, and get
+	// published in the generator)
+	cluster := &container.Cluster{
+		Autopilot: &container.Autopilot{
+			Enabled: true,
+		},
+	}
+
 	// Generate GKE cluster from resource spec.
-	cluster := &container.Cluster{}
 	gke.GenerateCluster(meta.GetExternalName(cr), cr.Spec.ForProvider, cluster)
 
-	// Insert default node pool for bootstrapping cluster. This is required to
-	// create a GKE cluster. After successful creation we delete the bootstrap
-	// node pool immediately and provision any subsequent node pools using the
-	// NodePool resource type.
-	gke.AddNodePoolForCreate(cluster)
+	// Autopilot mode doesn't need node-pool specification
+	if !cluster.Autopilot.Enabled{
+		// Insert default node pool for bootstrapping cluster. This is required to
+		// create a GKE cluster. After successful creation we delete the bootstrap
+		// node pool immediately and provision any subsequent node pools using the
+		// NodePool resource type.
+		gke.AddNodePoolForCreate(cluster)
+	}
 
 	create := &container.CreateClusterRequest{
 		Cluster: cluster,

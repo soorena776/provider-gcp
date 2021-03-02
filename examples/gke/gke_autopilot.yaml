@@ -1,0 +1,7 @@
+apiVersion: container.gcp.crossplane.io/v1beta1
+kind: GKECluster
+metadata:
+  name: autopilot 
+spec:
+  forProvider:
+    location: northamerica-northeast1
